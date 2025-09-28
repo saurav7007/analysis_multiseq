@@ -75,12 +75,12 @@ def find_extrema(sequences_lens: dict, extrema: str = "min") -> tuple[int, list[
     return (extreme_len, seq_ids)
 
 
-def find_orfs(sequence: str = "ATGCCCATGTAGAATTCAATGTTATAG", start_codons: list = ["ATG"], stop_codons: list = ["TAA","TAG","TGA"], frame: int = 1) -> list:
+def orf_finder(sequence: str = "ATGCCCATGTAGAATTCAATGTTATAG", start_codons: list = ["ATG"], stop_codons: list = ["TAA","TAG","TGA"], frame: int = 1) -> list:
     """
     Find all the ORFs present in the sequence.
 
     Args:
-        A string of sequence
+        A string of sequence.
 
     Returns:
         list: A list of ORFs per sequence.
@@ -94,9 +94,6 @@ def find_orfs(sequence: str = "ATGCCCATGTAGAATTCAATGTTATAG", start_codons: list 
     start_codon_pos = [pos * 3 + frame for pos, codon in enumerate(codons) if codon in start_codons]
     stop_codon_pos = [pos * 3 + frame for pos, codon in enumerate(codons) if codon in stop_codons]
 
-    print(start_codon_pos)
-    print(stop_codon_pos)
-
     valid_orfs_pos = []
 
     for start in start_codon_pos:
@@ -106,3 +103,26 @@ def find_orfs(sequence: str = "ATGCCCATGTAGAATTCAATGTTATAG", start_codons: list 
                 break
                 
     return [(orf_pos[0], sequence[orf_pos[0] - 1 : orf_pos[1] + 2]) for orf_pos in valid_orfs_pos]
+
+
+def orf_dict(seq_dictionary: dict, frames: list = [1, 2, 3]) -> dict[str, list]:
+        """
+        Converts seq_dictionary into orf dictionary containing sequence_id and list of ORFs.
+
+        Args:
+            seq_dictionary (dict): Dictionary of sequences {seq_id: seq}.
+            frames (list): List of frames to scan (1, 2, 3).
+
+        Returns:
+            dict: {sequence_id: [(orf1_pos, orf1_seq), (orf2_pos, orf2_seq), ...]}
+        """
+        orf_dict = {}
+
+        for seq_id, sequence in seq_dictionary.items():
+            all_orf = []
+            for frame in frames:
+                orf_in_frame = orf_finder(sequence = sequence, frame = frame)
+                all_orf.extend(orf_in_frame)
+            orf_dict[seq_id] = all_orf
+        
+        return orf_dict

@@ -25,7 +25,7 @@ def main():
     log.info(f"There are {len(shortest_seqs)} shortest sequences with ids {shortest_seqs} and length {min_len}.")
     log.info(f"There are {len(shortest_seqs)} longest sequences with ids {longest_seqs} and length {max_len}.")
 
-    print(fs.find_orfs())
+    print(fs.orf_dict(sequences))
 
 if __name__ == "__main__":
     main()
