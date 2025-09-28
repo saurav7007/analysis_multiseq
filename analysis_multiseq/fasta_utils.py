@@ -104,5 +104,5 @@ def find_orfs(sequence: str = "ATGCCCATGTAGAATTCAATGTTATAG", start_codons: list 
             if start < stop:
                 valid_orfs_pos.append((start, stop))
                 break
-
-    return [sequence[orf_pos[0] - 1 : orf_pos[1] + 2] for orf_pos in valid_orfs_pos]
+                
+    return [(orf_pos[0], sequence[orf_pos[0] - 1 : orf_pos[1] + 2]) for orf_pos in valid_orfs_pos]
