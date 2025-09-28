@@ -73,3 +73,36 @@ def find_extrema(sequences_lens: dict, extrema: str = "min") -> tuple[int, list[
     seq_ids = [seq_id for seq_id, length in sequences_lens.items() if length == extreme_len]
 
     return (extreme_len, seq_ids)
+
+
+def find_orfs(sequence: str = "ATGCCCATGTAGAATTCAATGTTATAG", start_codons: list = ["ATG"], stop_codons: list = ["TAA","TAG","TGA"], frame: int = 1) -> list:
+    """
+    Find all the ORFs present in the sequence.
+
+    Args:
+        A string of sequence
+
+    Returns:
+        list: A list of ORFs per sequence.
+    """
+    if frame not in {1, 2, 3}:
+        raise ValueError("Frame must be 1, 2, or 3")
+    updated_seq = sequence[frame - 1:]
+
+    codons = [updated_seq[i:i+3] for i in range(0, len(updated_seq) - len(updated_seq) % 3, 3)]
+
+    start_codon_pos = [pos * 3 + frame for pos, codon in enumerate(codons) if codon in start_codons]
+    stop_codon_pos = [pos * 3 + frame for pos, codon in enumerate(codons) if codon in stop_codons]
+
+    print(start_codon_pos)
+    print(stop_codon_pos)
+
+    valid_orfs_pos = []
+
+    for start in start_codon_pos:
+        for stop in stop_codon_pos:
+            if start < stop:
+                valid_orfs_pos.append((start, stop))
+                break
+
+    return [sequence[orf_pos[0] - 1 : orf_pos[1] + 2] for orf_pos in valid_orfs_pos]

@@ -1,5 +1,5 @@
 import sys
-from analysis_multiseq import logger as log, fasta_utils as fs
+from analysis_multiseq import logger, fasta_utils as fs
 
 log = logger.get_logger()
 
@@ -25,6 +25,7 @@ def main():
     log.info(f"There are {len(shortest_seqs)} shortest sequences with ids {shortest_seqs} and length {min_len}.")
     log.info(f"There are {len(shortest_seqs)} longest sequences with ids {longest_seqs} and length {max_len}.")
 
+    print(fs.find_orfs())
 
 if __name__ == "__main__":
     main()
