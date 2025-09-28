@@ -15,8 +15,16 @@ def main():
     sequences = seq_dict_from_fasta(fasta_file)
 
     # Count sequences
-    count = count_sequences(sequences)
-    logger.info("There are %d sequences in %s", count, fasta_file)
+    seq_count = count_sequences(sequences)
+    logger.info(f"There are {seq_count} sequences in {fasta_file}")
+
+    # Measure the length of every sequence
+    seq_len = sequences_lens(sequences)
+    min_len, shortest_seqs = find_extrema(seq_len, "min")
+    max_len, longest_seqs = find_extrema(seq_len, "max")
+
+    logger.info(f"There are {len(shortest_seqs)} shortest sequences with ids {shortest_seqs} and length {min_len}.")
+    logger.info(f"There are {len(shortest_seqs)} longest sequences with ids {longest_seqs} and length {max_len}.")
 
 
 if __name__ == "__main__":
