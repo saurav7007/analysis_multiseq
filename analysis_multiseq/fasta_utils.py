@@ -52,7 +52,7 @@ def sequences_lens(seq_dictionary: dict) -> dict[str, int]:
     return {seq_id: len(seq) for seq_id, seq in seq_dictionary.items()}
 
 
-def find_extrema(sequences_lens: dict, extrema: str = "min") -> tuple[int, list[str]]:
+def len_extrema(sequences_lens: dict, extrema: str = "min") -> tuple[int, list[str]]:
     """
     Find the sequences with maximum or minimun length.
 
@@ -83,7 +83,7 @@ def orf_finder(sequence: str = "ATGCCCATGTAGAATTCAATGTTATAG", start_codons: list
         A string of sequence.
 
     Returns:
-        list: A list of ORFs per sequence.
+        list: [(orf1_pos, orf1_seq, orf1_len)]
     """
     if frame not in {1, 2, 3}:
         raise ValueError("Frame must be 1, 2, or 3")
@@ -102,27 +102,98 @@ def orf_finder(sequence: str = "ATGCCCATGTAGAATTCAATGTTATAG", start_codons: list
                 valid_orfs_pos.append((start, stop))
                 break
                 
-    return [(orf_pos[0], sequence[orf_pos[0] - 1 : orf_pos[1] + 2]) for orf_pos in valid_orfs_pos]
+    return [(orf_pos[0], sequence[orf_pos[0] - 1 : orf_pos[1] + 2], orf_pos[1] - orf_pos[0]) for orf_pos in valid_orfs_pos]
 
 
-def orf_dict(seq_dictionary: dict, frames: list = [1, 2, 3]) -> dict[str, list]:
-        """
-        Converts seq_dictionary into orf dictionary containing sequence_id and list of ORFs.
+def orf_dict(seq_dictionary: dict, frames: list = [1, 2, 3]) -> dict[str, list[tuple[int, str, int]]]:
+    """
+    Converts seq_dictionary into orf dictionary containing sequence_id and list of ORFs.
 
-        Args:
-            seq_dictionary (dict): Dictionary of sequences {seq_id: seq}.
-            frames (list): List of frames to scan (1, 2, 3).
+    Args:
+        seq_dictionary (dict): Dictionary of sequences {seq_id: seq}.
+        frames (list): List of frames to scan (1, 2, 3).
 
-        Returns:
-            dict: {sequence_id: [(orf1_pos, orf1_seq), (orf2_pos, orf2_seq), ...]}
-        """
-        orf_dict = {}
+    Returns:
+        dict: {sequence_id: [(orf1_pos, orf1_seq, orf1_len), (orf2_pos, orf2_seq, orf2_len), ...]}
+    """
+    orf_dict = {}
 
-        for seq_id, sequence in seq_dictionary.items():
-            all_orf = []
-            for frame in frames:
-                orf_in_frame = orf_finder(sequence = sequence, frame = frame)
-                all_orf.extend(orf_in_frame)
-            orf_dict[seq_id] = all_orf
+    for seq_id, sequence in seq_dictionary.items():
+        all_orf = []
+        for frame in frames:
+            orf_in_frame = orf_finder(sequence = sequence, frame = frame)
+            all_orf.extend(orf_in_frame)
+        orf_dict[seq_id] = all_orf
         
-        return orf_dict
+    return orf_dict
+
+
+def orf_extremas(orf_dictionary: dict, extrema: str = "min") -> dict[str, list[tuple[int, str, int]]]:
+    """
+    Find ORFs with maximum and minimum lengths for a sequence_id.
+
+    Args:
+        orf_dictionary (dict): Dictionary of ORFS {sequence_id: [(orf1_pos, orf1_seq, orf1_len), (orf2_pos, orf2_seq, orf2_len), ...]}
+        extreme (str): "min" or "max"
+
+    Returns:
+        dict: {sequence_id: [(orf1_pos, orf1_seq, orf1_len), orf2_pos, orf2_seq, orf2_len, ...]}
+    """
+    extremas = {}
+
+    for seq_id, orf_list in orf_dictionary.items():
+
+        if extrema == "min":
+            extrema_len = min(orf[2] for orf in orf_list)
+        elif extrema == "max":
+            extrema_len = max(orf[2] for orf in orf_list)
+        else:
+            raise ValueError("extrema must be 'min' or 'max'")
+        
+        orf_extrema = [orf for orf in orf_list if orf[2] == extrema_len]
+
+        extremas[seq_id] = orf_extrema
+    
+    return extremas
+
+
+def longest_orf(orf_dictionary: dict) -> dict[str, list[tuple[int, str, int]]]:
+    """
+    Get the longest ORF(s) across all sequences.
+
+    Args:
+        orf_dictionary (dict): Dictionary of ORFs
+            {sequence_id: [(orf1_pos, orf1_seq, orf1_len), ...]}
+
+    Returns:
+        dict: {sequence_id: [(longest_orf_pos, longest_orf_seq, longest_orf_len), ...]}
+              Includes all sequences that contain the globally longest ORF(s).
+    """
+    seq_longest_orfs = orf_extremas(orf_dictionary, "max")
+
+    global_max_len = max(orfs[0][2] for orfs in seq_longest_orfs.values() if orfs)
+
+    # Keep only those sequences whose ORFs have the global max length
+    global_longest_orfs = {seq_id: orfs for seq_id, orfs in seq_longest_orfs.items() if orfs and orfs[0][2] == global_max_len}
+
+    return global_longest_orfs
+
+
+def shortest_orf(orf_dictionary: dict) -> dict[str, list[tuple[int, str, int]]]:
+    """
+    Get the shortest orf from the orf_dictionary.
+
+    Args:
+        orf_dictionary (dict): Dictionary of ORFS {sequence_id: [(orf1_pos, orf1_seq, orf1_len), (orf2_pos, orf2_seq, orf2_len), ...]}
+
+    Returns:
+        dict: {sequence_id: [(shortest_orf_pos, shortest_orf_seq, shortest_orf_len)]}
+    """
+    seq_shortest_orfs = orf_extremas(orf_dictionary, "min")
+
+    global_min_len = min(orfs[0][2] for orfs in seq_shortest_orfs.values() if orfs)
+
+    # Keep only those sequences whose ORFs have the global max length
+    global_shortest_orfs = {seq_id: orfs for seq_id, orfs in seq_shortest_orfs.items() if orfs and orfs[0][2] == global_min_len}
+
+    return global_shortest_orfs
