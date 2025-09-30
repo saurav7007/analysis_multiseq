@@ -18,7 +18,7 @@ def seq_dict_from_fasta(multi_fa: str) -> dict[str, str]:
             line = line.strip()
 
             if line.startswith(">"):
-                seq_id = line[1:]  # remove ">" from ID
+                seq_id = line[1:].split(" ")[0]  # remove ">" from ID
                 seq_dict[seq_id] = ""
             else:
                 if seq_id is None:
@@ -144,8 +144,10 @@ def orf_extremas(orf_dictionary: dict, extrema: str = "min") -> dict[str, list[t
     extremas = {}
 
     for seq_id, orf_list in orf_dictionary.items():
-
-        if extrema == "min":
+        if orf_list == []:
+            extremas[seq_id] = []
+            continue
+        elif extrema == "min":
             extrema_len = min(orf[2] for orf in orf_list)
         elif extrema == "max":
             extrema_len = max(orf[2] for orf in orf_list)

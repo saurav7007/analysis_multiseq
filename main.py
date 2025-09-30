@@ -27,18 +27,22 @@ def main():
     log.info(f"There are {len(shortest_seqs)} longest sequences with ids {longest_seqs} and length {max_len}.")
 
     # Measure all the ORFs in sequence dictionary
-    orfs = fs.orf_dict(sequences)
+    orfs = fs.orf_dict(sequences, frames = [1, 2, 3])
     long_orfs = fs.orf_extremas(orfs, "max")
+
+    seq_id = "gi|142022655|gb|EQ086233.1|16"
+    log.info(f"The longest forward ORF in sequence {seq_id} is {long_orfs[seq_id]}.")
+
     longest_orf = fs.longest_orf(orfs)
 
     log.info(f"{len(longest_orf)} sequences {list(longest_orf.keys())} are found in {fasta_file} with longest ORFs with length {list(longest_orf.values())[0][0][2]} at position {list(longest_orf.values())[0][0][0]}.")
 
     # Detect the motif frequency
-    all_motifs = fs.scan_motif(sequences, size=3)
+    all_motifs = fs.scan_motif(sequences, size=7)
 
-    common_motifs = fs.find_common_motif(sequences, size=3)
+    common_motifs = fs.find_common_motif(sequences, size=7)
 
-    motif_size, most_common_motifs = fs.most_common_motif(sequences, size=3)
+    motif_size, most_common_motifs = fs.most_common_motif(sequences, size=7)
 
     print(most_common_motifs)
 
