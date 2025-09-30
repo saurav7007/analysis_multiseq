@@ -1,3 +1,5 @@
+from collections import Counter
+
 def seq_dict_from_fasta(multi_fa: str) -> dict[str, str]:
     """
     Create a dictionary containing sequence IDs and their sequences.
@@ -163,7 +165,7 @@ def longest_orf(orf_dictionary: dict) -> dict[str, list[tuple[int, str, int]]]:
 
     Args:
         orf_dictionary (dict): Dictionary of ORFs
-            {sequence_id: [(orf1_pos, orf1_seq, orf1_len), ...]}
+        {sequence_id: [(orf1_pos, orf1_seq, orf1_len), ...]}
 
     Returns:
         dict: {sequence_id: [(longest_orf_pos, longest_orf_seq, longest_orf_len), ...]}
@@ -197,3 +199,67 @@ def shortest_orf(orf_dictionary: dict) -> dict[str, list[tuple[int, str, int]]]:
     global_shortest_orfs = {seq_id: orfs for seq_id, orfs in seq_shortest_orfs.items() if orfs and orfs[0][2] == global_min_len}
 
     return global_shortest_orfs
+
+
+def scan_motif(seq_dictionary: dict, size: int) -> dict[str , list[tuple[int, str]]]:
+    """
+    Find all the repeating region in a given sequence dictionary along with their count.
+
+    Args:
+        seq_dictionary (dict): Dictionary of sequences: {seq_id: seq}.
+        size (int): The size of the motif to search.
+
+    Returns:
+        dict: {sequence_id: [(motif1_count, motif1_seq), (motif2_count, motif2_seq), ...]}
+    """
+    motifs = {}
+
+    for seq_id, seq in seq_dictionary.items():
+        k_mers = [seq[i:i+size] for i in range(0, (len(seq))) if len(seq) - i >= size]
+        counts = Counter(k_mers)
+        motif_list = [(count, k_mer) for k_mer, count in counts.items() if count > 1]
+        motifs[seq_id] = motif_list
+    
+    return size, motifs
+
+
+def find_common_motif(motif_dictionary: dict, size: int) -> dict[str , list[tuple[int, str]]]:
+    """
+    Find most common motif per sequence in sequence dictionary.
+
+    Args:
+        seq_dictionary (dict): Dictionary of sequences: {seq_id: seq}.
+        size (int): The size of the motif to search.
+    
+    Returns:
+        dict: {seq1: [(seq1_common_motif_count, seq1_common_motif_seq)], seq2: [(seq2_common_motif_count, seq1_common_motif_seq)], ...}
+    """
+    size, motifs = scan_motif(motif_dictionary, size)
+
+    common_motif = {}
+
+    for seq_id, motif_list in motifs.items():
+        max_freq = max(motif[0] for motif in motif_list)
+        common_motif[seq_id] = [motif for motif in motif_list if motif[0] == max_freq]
+
+    return size, common_motif
+
+
+def most_common_motif(motif_dictionary: dict, size: int) -> dict[str , list[tuple[int, str]]]:
+    """
+    Find most common motif across all the sequence in sequence dictionary.
+
+    Args:
+        orf_dictionary (dict): Dictionary of ORFS {sequence_id: [(orf1_pos, orf1_seq, orf1_len), (orf2_pos, orf2_seq, orf2_len), ...]}
+
+    Returns:
+        dict: {sequence_id: [(most_common_motif_count, most_common_motif_seq), ...]}
+    """
+    size, common_motifs = find_common_motif(motif_dictionary, size)
+
+    global_max_count = max(motif[0][0] for motif in common_motifs.values())
+
+    # Keep only those motifs with global max count
+    most_common_motif = {seq_id: motif_list for seq_id, motif_list in common_motifs.items() if motif_list[0][0] == global_max_count}
+
+    return size, most_common_motif

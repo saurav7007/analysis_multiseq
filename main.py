@@ -31,7 +31,18 @@ def main():
     long_orfs = fs.orf_extremas(orfs, "max")
     longest_orf = fs.longest_orf(orfs)
 
-    log.info(f"{len(longest_orf)} sequences {list(longest_orf.keys())} are found in {fasta_file} with longest ORFs with length {list(longest_orf.values())[0][0][2]}.")
+    log.info(f"{len(longest_orf)} sequences {list(longest_orf.keys())} are found in {fasta_file} with longest ORFs with length {list(longest_orf.values())[0][0][2]} at position {list(longest_orf.values())[0][0][0]}.")
+
+    # Detect the motif frequency
+    all_motifs = fs.scan_motif(sequences, size=3)
+
+    common_motifs = fs.find_common_motif(sequences, size=3)
+
+    motif_size, most_common_motifs = fs.most_common_motif(sequences, size=3)
+
+    print(most_common_motifs)
+
+    log.info(f"The most frequent motif of length {motif_size} is {list(most_common_motifs.values())[0][0][1]}. It occurred {list(most_common_motifs.values())[0][0][0]} times in sequence {list(longest_orf.keys())}")
 
 if __name__ == "__main__":
     main()
